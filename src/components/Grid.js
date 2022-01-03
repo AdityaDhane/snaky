@@ -16,15 +16,14 @@ class Grid extends React.Component {
         const food = this.getRandomCell(grid);
         grid[food[0]][food[1]] = -1;
         
-        
         this.state = {
-            grid: grid,
+            grid: grid
         };
         this.snake = {
             head: [4,3],
             tail: [4,0],
         };
-            
+        
         const sideX = this.gridSize.X * props.cellSize + 'px';
         const sideY = this.gridSize.Y * props.cellSize + 'px';
         this.style = {
@@ -33,11 +32,42 @@ class Grid extends React.Component {
         };
         
         this.updateGrid = this.updateGrid.bind(this);
-        this.changeDirection = this.changeDirection.bind(this);
+        this.keyHandler = this.keyHandler.bind(this);
         this.getRandomCell = this.getRandomCell.bind(this);
     }
 
-    changeDirection(key) {
+    // reset game
+    resetGrid() {
+        console.log('reset')
+        const grid = Array(this.gridSize.Y).fill().map(() => Array(this.gridSize.X).fill(0));
+        for(let i=0; i<4; i++)
+            grid[4][i] = 1;
+        
+        const food = this.getRandomCell(grid);
+        grid[food[0]][food[1]] = -1;
+        
+        this.setState({
+            grid: grid
+        });
+        this.snake = {
+            head: [4,3],
+            tail: [4,0],
+        };
+        this.interval = setInterval(this.updateGrid, 100);
+        this.props.resetGame();
+    }
+
+    // Event handler for keyboard key press
+    keyHandler(event) {
+        let key = event.key
+
+        if(!this.props.gameOn) {
+            if (key === ' ')
+                this.resetGrid();
+            else
+                return;
+        }
+
         const dir = {
             'ArrowRight': 1,
             'ArrowDown': 2,
@@ -57,6 +87,7 @@ class Grid extends React.Component {
         }
     }
 
+    // generate food location
     getRandomCell(grid) {
         let x,y;
         do {
@@ -66,6 +97,7 @@ class Grid extends React.Component {
         return [y, x];
     }
     
+    // move snake forward
     updateGrid() {
         const grid = this.state.grid.map((arr) => {
             return arr.slice();
@@ -89,20 +121,22 @@ class Grid extends React.Component {
         let dir = grid[snake.head[0]][snake.head[1]];
         next(snake.head, dir);
 
+        // Gameover
         if(grid[snake.head[0]][snake.head[1]] > 0)
         {
-            document.removeEventListener('keydown', this.changeDirection);
             clearInterval(this.interval);    
             this.props.gameOver();
         }
         else
         {
+            // no food caught
             if(grid[snake.head[0]][snake.head[1]] === 0)
             {
                 const dir = grid[snake.tail[0]][snake.tail[1]];
                 grid[snake.tail[0]][snake.tail[1]] = 0;
                 next(snake.tail,dir);
             }
+            // food caught
             else
             {
                 this.props.incScore();
@@ -119,10 +153,14 @@ class Grid extends React.Component {
     }
   
     componentDidMount() {
+        console.log('component did mount')
         this.interval = setInterval(this.updateGrid, 100);
-        document.addEventListener('keydown', (event) => {
-            this.changeDirection(event.key);
-        });
+        document.addEventListener('keydown', this.keyHandler)
+    }
+
+    componentWillUnmount() {
+        clearInterval(this.interval)
+        document.removeEventListener('keydown', this.keyHandler)
     }
 
     render() {

@@ -8,14 +8,28 @@
 	flex-direction: row;
 	flex-wrap: wrap;
 	border: 15px solid #000000;
-	margin: auto auto;
+	margin: 0px auto;
 }
 
 .grid-item {
-	border: 0px solid red; 
+	border: 0px solid red;
 }
 
 .scoreboard {
 	display: flex;
 	justify-content: space-evenly;
+}
+
+.scoreboard h1{
+	margin: 0;
+}
+
+.App h2 {
+	font-weight: bold;
+	font-style: italic;
+}
+
+hr {
+	width: 60%;
+	margin: 20px auto;
 }

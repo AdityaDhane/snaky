@@ -12,6 +12,7 @@ class App extends React.Component {
 		};
 
 		this.gameOver = this.gameOver.bind(this);
+		this.resetGame = this.resetGame.bind(this);
 		this.incScore = this.incScore.bind(this);
 	}
 
@@ -21,24 +22,35 @@ class App extends React.Component {
 		})
 	}
 
+	resetGame() {
+		this.setState((state) => ({
+			gameOn: true,
+			score: 0,
+		}))
+	}
+
 	incScore() {
-		this.setState({
-			score: this.state.score+1,
-			highScore: Math.max(this.state.highScore, this.state.score + 1),
-		})
+		this.setState((state) => ({
+			score: state.score + 1,
+			highScore: Math.max(state.highScore, state.score+1),
+		}))
 	}
 
 	render() {
 		return (
 			<div className="App">
-				<h1>🐍 Snaky 🐍</h1>
-				<Grid cellSize={20} gameOver={this.gameOver} incScore={this.incScore} />
+				<h1 id='header'>🐍 Snaky 🐍</h1>
+				<Grid cellSize={20}
+					gameOn={this.state.gameOn}
+					gameOver={this.gameOver}
+					resetGame={this.resetGame}
+					incScore={this.incScore} />
+				{!this.state.gameOn && 
+					<h2>press Space to restart</h2>}
 				<div className='scoreboard'>
 					<h1>HighScore: {this.state.highScore}</h1>
 					<h1>Score: {this.state.score}</h1>
 				</div>
-				{!this.state.gameOn && 
-					<h1>Game Over</h1>}
 			</div>
 		)
 	}

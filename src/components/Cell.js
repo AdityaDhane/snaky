@@ -5,7 +5,8 @@ function Cell(props) {
 		if(props.color > 0)
 			bgColor = 'purple';
 		else if(props.color < 0)
-			bgColor = 'red';
+		bgColor = 'red';
+		
 		const side = props.cellSize + 'px';
 		const style = {
 				height: side,
