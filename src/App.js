@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import './App.css';
 import Grid from './components/Grid';
 
-function App (props) {
+function App () {
 	const [gameOn, setGameOn] = useState(true);
 	const [score, setScore] = useState({ score: 0, highScore: 0 });
 
@@ -28,13 +28,13 @@ function App (props) {
 	return (
 		<div className="App">
 			<h1 id='header'>🐍 Snaky 🐍</h1>
-			<Grid cellSize={20}
+			<Grid
 				gameOn={gameOn}
 				gameOver={gameOver}
 				resetGame={resetGame}
-				incScore={incScore} />
-			{!gameOn &&
-				<h2>press Space to restart</h2>}
+				incScore={incScore}
+			/>
+			{!gameOn && <h2>press Space to restart</h2>}
 			<div className='scoreboard'>
 				<h1>HighScore: {score.highScore}</h1>
 				<h1>Score: {score.score}</h1>

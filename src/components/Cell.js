@@ -2,19 +2,21 @@ import React from 'react';
 
 function Cell(props) {
 		let bgColor = 'white';
-		if(props.color > 0)
+		if (props.color > 0) {
 			bgColor = 'purple';
-		else if(props.color < 0)
-		bgColor = 'red';
-		
+		}
+		else if(props.color < 0) {
+			bgColor = 'red';
+		}
+
 		const side = props.cellSize + 'px';
-		const style = {
+
+		return (
+			<div className="grid-item" style={{
 				height: side,
 				width: side,
 				backgroundColor: bgColor,
-		};
-		return (
-			<div className="grid-item" style={style}></div>
+			}} />
 		)
 }
 
