@@ -87,6 +87,8 @@ function Grid(props) {
                 resetGrid();
             else
                 return;
+        } else if (key === 'Escape') {
+            props.gameOver();
         }
 
         const dir = {
@@ -111,10 +113,12 @@ function Grid(props) {
             }
             return gridState
         })
-    }, [props.gameOn, resetGrid, updateGrid]);
+    }, [props.gameOn, props.gameOver, resetGrid, updateGrid]);
 
     useEffect(() => {
-        interval.current = setInterval(updateGrid, 100);
+        if (!interval.current) {
+            interval.current = setInterval(updateGrid, 100);
+        }
         document.addEventListener('keydown', keyHandler);
 
         return () => {
