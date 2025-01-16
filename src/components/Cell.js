@@ -1,20 +1,21 @@
 import React from 'react';
+import { CELL_COLORS } from '../constants/common';
 
 function Cell(props) {
-		let bgColor = 'white';
-		if(props.color > 0)
-			bgColor = 'purple';
-		else if(props.color < 0)
-		bgColor = 'red';
-		
-		const side = props.cellSize + 'px';
-		const style = {
-				height: side,
-				width: side,
-				backgroundColor: bgColor,
-		};
+		let bgColor = CELL_COLORS.empty;
+		if (props.color > 0) {
+			bgColor = CELL_COLORS.snake;
+		}
+		else if(props.color < 0) {
+			bgColor = CELL_COLORS.food;
+		}
+
 		return (
-			<div className="grid-item" style={style}></div>
+			<div className="grid-item" style={{
+				height: props.cellSize + 'px',
+				width: props.cellSize + 'px',
+				backgroundColor: bgColor,
+			}} />
 		)
 }
 

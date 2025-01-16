@@ -1,69 +1,90 @@
-import React from 'react';
-import Cell from './Cell'
+import React, { useRef, useState, useEffect, useCallback } from 'react';
+import Cell from './Cell';
+import { snakeNextPosition, getRandomCell } from '../utils/common';
 
-class Grid extends React.Component {
-    constructor(props) {
-        super(props);
-        this.gridSize = {
-            X: Math.floor(window.screen.availWidth/(2*props.cellSize)),
-            Y: Math.floor(window.screen.availHeight/(2*props.cellSize)),
-        };
-        
-        const grid = Array(this.gridSize.Y).fill().map(() => Array(this.gridSize.X).fill(0));
-        for(let i=0; i<4; i++)
-            grid[4][i] = 1;
-        
-        const food = this.getRandomCell(grid);
-        grid[food[0]][food[1]] = -1;
-        
-        this.state = {
-            grid: grid
-        };
-        this.snake = {
-            head: [4,3],
-            tail: [4,0],
-        };
-        
-        const sideX = this.gridSize.X * props.cellSize + 'px';
-        const sideY = this.gridSize.Y * props.cellSize + 'px';
-        this.style = {
-            height: sideY,
-            width: sideX,
-        };
-        
-        this.updateGrid = this.updateGrid.bind(this);
-        this.keyHandler = this.keyHandler.bind(this);
-        this.getRandomCell = this.getRandomCell.bind(this);
-    }
+const CELL_SIZE = 20;
+
+const gridSize = {
+    X: Math.floor(window.screen.availWidth / (2 * CELL_SIZE)),
+    Y: Math.floor(window.screen.availHeight / (2 * CELL_SIZE)),
+};
+
+const initialSnake = {
+    head: [4,3],
+    tail: [4,0],
+};
+
+const initialGrid = Array(gridSize.Y).fill().map(() => Array(gridSize.X).fill(0));
+for(let i=0; i<4; i++)
+    initialGrid[4][i] = 1;
+
+const food = getRandomCell(initialGrid, gridSize);
+initialGrid[food[0]][food[1]] = -1;
+
+function Grid(props) {
+    const interval = useRef(null);
+    const [gridState, setGridState] = useState({
+        grid: initialGrid,
+        snake: initialSnake,
+    });
+
+    // move snake forward
+    const updateGrid = useCallback(() => {
+        setGridState((gridState) => {
+            const gridNew = JSON.parse(JSON.stringify(gridState.grid));
+            const snakeNew = JSON.parse(JSON.stringify(gridState.snake));
+
+            let dir = gridNew[snakeNew.head[0]][snakeNew.head[1]];
+            snakeNextPosition(snakeNew.head, dir, gridSize);
+
+            // Gameover
+            if (gridNew[snakeNew.head[0]][snakeNew.head[1]] > 0) {
+                clearInterval(interval.current);
+                props.gameOver();
+                return gridState;
+            } else {
+                // no food caught
+                if(gridNew[snakeNew.head[0]][snakeNew.head[1]] === 0)
+                {
+                    const dir = gridNew[snakeNew.tail[0]][snakeNew.tail[1]];
+                    gridNew[snakeNew.tail[0]][snakeNew.tail[1]] = 0;
+                    snakeNextPosition(snakeNew.tail, dir, gridSize);
+                }
+                // food caught
+                else
+                {
+                    props.incScore();
+                    const food = getRandomCell(gridNew, gridSize);
+                    gridNew[food[0]][food[1]] = -1;
+                }
+                gridNew[snakeNew.head[0]][snakeNew.head[1]] = dir;
+
+                return {
+                    grid: gridNew,
+                    snake: snakeNew,
+                };
+            }
+        })
+    }, [props.gameOver, props.incScore]);
 
     // reset game
-    resetGrid() {
-        console.log('reset')
-        const grid = Array(this.gridSize.Y).fill().map(() => Array(this.gridSize.X).fill(0));
-        for(let i=0; i<4; i++)
-            grid[4][i] = 1;
-        
-        const food = this.getRandomCell(grid);
-        grid[food[0]][food[1]] = -1;
-        
-        this.setState({
-            grid: grid
+    const resetGrid = useCallback(() => {
+        setGridState({
+            grid: initialGrid,
+            snake: initialSnake,
         });
-        this.snake = {
-            head: [4,3],
-            tail: [4,0],
-        };
-        this.interval = setInterval(this.updateGrid, 100);
-        this.props.resetGame();
-    }
+
+        props.resetGame();
+        interval.current = setInterval(updateGrid, 100);
+    }, [props.resetGame, updateGrid]);
 
     // Event handler for keyboard key press
-    keyHandler(event) {
+    const keyHandler = useCallback((event) => {
         let key = event.key
 
-        if(!this.props.gameOn) {
+        if (!props.gameOn) {
             if (key === ' ')
-                this.resetGrid();
+                resetGrid();
             else
                 return;
         }
@@ -74,112 +95,51 @@ class Grid extends React.Component {
             'ArrowLeft': 3,
             'ArrowUp': 4,
         };
-        if(key in dir && this.state.grid[this.snake.head[0]][this.snake.head[1]]%2 !== dir[key]%2)
-        {
-            const grid = this.state.grid.map((arr) => {
-                return arr.slice();
-            });
-            grid[this.snake.head[0]][this.snake.head[1]] = dir[key];
-            this.setState({
-                grid: grid,
-            });
-            this.updateGrid();
-        }
-    }
 
-    // generate food location
-    getRandomCell(grid) {
-        let x,y;
-        do {
-            x = Math.floor(Math.random() * this.gridSize.X);
-            y = Math.floor(Math.random() * this.gridSize.Y);
-        } while(grid[y][x]);
-        return [y, x];
-    }
-    
-    // move snake forward
-    updateGrid() {
-        const grid = this.state.grid.map((arr) => {
-            return arr.slice();
-        });
-        const snake = this.snake;
-
-        const next = (point, dir) => {
-            if(dir === 1)
-                point[1]+=1;
-            else if(dir === 2)
-                point[0]+=1;
-            else if(dir === 3)
-                point[1]-=1;
-            else 
-                point[0]-=1;
-            point[0] = (this.gridSize.Y + point[0]) % this.gridSize.Y;
-            point[1] = (this.gridSize.X + point[1]) % this.gridSize.X;
-            return point;
-        }
-
-        let dir = grid[snake.head[0]][snake.head[1]];
-        next(snake.head, dir);
-
-        // Gameover
-        if(grid[snake.head[0]][snake.head[1]] > 0)
-        {
-            clearInterval(this.interval);    
-            this.props.gameOver();
-        }
-        else
-        {
-            // no food caught
-            if(grid[snake.head[0]][snake.head[1]] === 0)
-            {
-                const dir = grid[snake.tail[0]][snake.tail[1]];
-                grid[snake.tail[0]][snake.tail[1]] = 0;
-                next(snake.tail,dir);
+        setGridState((gridState) => {
+            if (
+                key in dir
+                && gridState.grid[gridState.snake.head[0]][gridState.snake.head[1]]%2 !== dir[key]%2
+            ) {
+                const gridNew = JSON.parse(JSON.stringify(gridState.grid));
+                gridNew[gridState.snake.head[0]][gridState.snake.head[1]] = dir[key];
+                updateGrid();
+                return {
+                    grid: gridNew,
+                    snake: gridState.snake,
+                };
             }
-            // food caught
-            else
-            {
-                this.props.incScore();
-                const food = this.getRandomCell(grid,this.gridSize);
-                grid[food[0]][food[1]] = -1;
-            }
-            grid[snake.head[0]][snake.head[1]] = dir;
-            
-            this.snake = snake;
-            this.setState({
-                grid: grid,
-            });
+            return gridState
+        })
+    }, [props.gameOn, resetGrid, updateGrid]);
+
+    useEffect(() => {
+        interval.current = setInterval(updateGrid, 100);
+        document.addEventListener('keydown', keyHandler);
+
+        return () => {
+            clearInterval(interval.current);
+            document.removeEventListener('keydown', keyHandler);
         }
-    }
-  
-    componentDidMount() {
-        console.log('component did mount')
-        this.interval = setInterval(this.updateGrid, 100);
-        document.addEventListener('keydown', this.keyHandler)
-    }
+    }, [updateGrid, keyHandler]);
 
-    componentWillUnmount() {
-        clearInterval(this.interval)
-        document.removeEventListener('keydown', this.keyHandler)
-    }
 
-    render() {
-        const grid = this.state.grid.slice();
-        const cells = [];
-        grid.forEach((row, i) => {
-                row.forEach((cell, j) => {
-                    cells.push((<Cell key={this.gridSize.X*i+j}
-                                 color={cell} 
-                                 cellSize={this.props.cellSize}/>));
-            });
-        });
-    
-        return (
-            <div className="grid" style={this.style}>
-                {cells}
-            </div>
-        )
-    }
+    return (
+        <div className="grid" style={{
+            height: gridSize.Y * CELL_SIZE+ 'px',
+            width: gridSize.X * CELL_SIZE + 'px',
+        }}>
+            {gridState.grid.map((row, i) => (
+                row.map((cell, j) => (
+                    <Cell
+                        key={gridSize.X*i+j}
+                        color={cell}
+                        cellSize={CELL_SIZE}
+                    />
+                ))
+            ))}
+        </div>
+    );
 }
 
 export default Grid;

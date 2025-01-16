@@ -1,59 +1,46 @@
-import React from 'react';
+import React, { useState } from 'react';
 import './App.css';
 import Grid from './components/Grid';
 
-class App extends React.Component {
-	constructor(props) {
-		super(props);
-		this.state = {
-			gameOn: true,
+function App () {
+	const [gameOn, setGameOn] = useState(true);
+	const [score, setScore] = useState({ score: 0, highScore: 0 });
+
+	const gameOver = () => {
+		setGameOn(false);
+	}
+
+	const resetGame = () => {
+		setGameOn(true);
+		setScore((prevScore) => ({
 			score: 0,
-			highScore: 0,
-		};
-
-		this.gameOver = this.gameOver.bind(this);
-		this.resetGame = this.resetGame.bind(this);
-		this.incScore = this.incScore.bind(this);
+			highScore: prevScore.highScore,
+		}));
 	}
 
-	gameOver() {
-		this.setState({
-			gameOn: false,
-		})
+	const incScore = () => {
+		setScore((prevScore) => ({
+			score: prevScore.score + 1,
+			highScore:  Math.max(prevScore.highScore, prevScore.score + 1,),
+		}));
 	}
 
-	resetGame() {
-		this.setState((state) => ({
-			gameOn: true,
-			score: 0,
-		}))
-	}
-
-	incScore() {
-		this.setState((state) => ({
-			score: state.score + 1,
-			highScore: Math.max(state.highScore, state.score+1),
-		}))
-	}
-
-	render() {
-		return (
-			<div className="App">
-				<h1 id='header'>🐍 Snaky 🐍</h1>
-				<Grid cellSize={20}
-					gameOn={this.state.gameOn}
-					gameOver={this.gameOver}
-					resetGame={this.resetGame}
-					incScore={this.incScore} />
-				{!this.state.gameOn && 
-					<h2>press Space to restart</h2>}
-				<div className='scoreboard'>
-					<h1>HighScore: {this.state.highScore}</h1>
-					<h1>Score: {this.state.score}</h1>
-				</div>
+	return (
+		<div className="App">
+			<h1 id='header'>🐍 Snaky 🐍</h1>
+			<Grid
+				gameOn={gameOn}
+				gameOver={gameOver}
+				resetGame={resetGame}
+				incScore={incScore}
+			/>
+			{!gameOn && <h2>press Space to restart</h2>}
+			<div className='scoreboard'>
+				<h1>HighScore: {score.highScore}</h1>
+				<h1>Score: {score.score}</h1>
 			</div>
-		)
-	}
+		</div>
+	);
 }
 
 export default App;
