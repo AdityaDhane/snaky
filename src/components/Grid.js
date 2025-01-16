@@ -1,5 +1,6 @@
 import React, { useRef, useState, useEffect, useCallback } from 'react';
 import Cell from './Cell';
+import { snakeNextPosition, getRandomCell } from '../utils/common';
 
 const CELL_SIZE = 20;
 
@@ -8,42 +9,17 @@ const gridSize = {
     Y: Math.floor(window.screen.availHeight / (2 * CELL_SIZE)),
 };
 
-// generate food location
-const getRandomCell = (grid) => {
-    let x,y;
-    do {
-        x = Math.floor(Math.random() * gridSize.X);
-        y = Math.floor(Math.random() * gridSize.Y);
-    } while(grid[y][x]);
-    return [y, x];
-}
-
-const next = (point, dir) => {
-    if(dir === 1)
-        point[1]+=1;
-    else if(dir === 2)
-        point[0]+=1;
-    else if(dir === 3)
-        point[1]-=1;
-    else
-        point[0]-=1;
-    point[0] = (gridSize.Y + point[0]) % gridSize.Y;
-    point[1] = (gridSize.X + point[1]) % gridSize.X;
-    return point;
-}
-
+const initialSnake = {
+    head: [4,3],
+    tail: [4,0],
+};
 
 const initialGrid = Array(gridSize.Y).fill().map(() => Array(gridSize.X).fill(0));
 for(let i=0; i<4; i++)
     initialGrid[4][i] = 1;
 
-const food = getRandomCell(initialGrid);
+const food = getRandomCell(initialGrid, gridSize);
 initialGrid[food[0]][food[1]] = -1;
-
-const initialSnake = {
-    head: [4,3],
-    tail: [4,0],
-};
 
 function Grid(props) {
     const interval = useRef(null);
@@ -59,7 +35,7 @@ function Grid(props) {
             const snakeNew = JSON.parse(JSON.stringify(gridState.snake));
 
             let dir = gridNew[snakeNew.head[0]][snakeNew.head[1]];
-            next(snakeNew.head, dir);
+            snakeNextPosition(snakeNew.head, dir, gridSize);
 
             // Gameover
             if (gridNew[snakeNew.head[0]][snakeNew.head[1]] > 0) {
@@ -72,7 +48,7 @@ function Grid(props) {
                 {
                     const dir = gridNew[snakeNew.tail[0]][snakeNew.tail[1]];
                     gridNew[snakeNew.tail[0]][snakeNew.tail[1]] = 0;
-                    next(snakeNew.tail, dir);
+                    snakeNextPosition(snakeNew.tail, dir, gridSize);
                 }
                 // food caught
                 else
